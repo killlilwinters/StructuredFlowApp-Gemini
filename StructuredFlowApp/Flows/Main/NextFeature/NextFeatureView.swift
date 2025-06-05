@@ -1,171 +1,130 @@
-//
-//  NextFeatureView.swift
-//  StructuredFlowApp
-//
-//  Created by Gemini 2.5 Pro on 04.06.2025.
-//
-
 import SwiftUI
 
 struct NextFeatureView: View {
     @State var viewModel: NextFeatureViewModel
-
-    // Namespace for the animation, remains in the View
     @Namespace private var animationNamespace
+    @State private var isZoomed = false
+    @State private var zoomedCardId = UUID()
 
-    var body: some View {
-        ZStack {
-            // --- List of Cards ---
-            if viewModel.state.selectedItem == nil {
-                ScrollView {
-                    LazyVStack(spacing: 15) {
-                        ForEach(viewModel.state.items) { item in // items from viewModel
-                            SmallDemoCard(item: item, namespace: animationNamespace)
-                                .frame(height: 120)
-                                .padding(.horizontal)
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                        viewModel.selectItem(item) // Update viewModel
-                                    }
-                                }
-                        }
-                    }
-                    .padding(.top, 10)
-                }
-                .transition(.asymmetric(insertion: .opacity.animation(.easeInOut(duration: 0.2)),
-                                        removal: .opacity.animation(.easeInOut(duration: 0.1))))
-            }
-
-            // --- Detail View (Expanded Card) ---
-            if let selectedItem = viewModel.state.selectedItem { // selectedItem from viewModel
-                DetailDemoCard(item: selectedItem, namespace: animationNamespace) {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                        viewModel.deselectItem() // Update viewModel
-                    }
-                }
-                .zIndex(1)
-                .transition(.asymmetric(insertion: .opacity.animation(.easeInOut(duration: 0.1).delay(0.1)),
-                                        removal: .opacity.animation(.easeInOut(duration: 0.2))))
-            }
-        }
-        .navigationTitle("Feature Showcase")
+    private var animation: Animation {
+        .spring(response: 0.55, dampingFraction: 0.82)
     }
-}
-
-// MARK: - Card Subviews
-struct SmallDemoCard: View {
-    let item: NextFeatureView.CardType // Uses the enum type
-    let namespace: Namespace.ID
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Spacer()
-            Text(item.title) // Access computed property
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(12)
-        }
-        .frame(maxWidth: .infinity, alignment: .bottomLeading)
-        .background(
-            item.color // Access computed property
-                .matchedGeometryEffect(id: item.id, in: namespace) // Use enum's id
+        let rectangle = UnevenRoundedRectangle(
+            cornerRadii:
+                    .init(
+                        topLeading: 25,
+                        bottomLeading: 0,
+                        bottomTrailing: 25,
+                        topTrailing: 0
+                    )
         )
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
+        ZStack {
+            if !isZoomed {
+                Button(action: {
+                    withAnimation(animation) {
+                        isZoomed = true
+                    }
+                }) {
+                    rectangle
+                        .fill(Color.blue.mix(with: .black, by: 0.5))
+                        .frame(height: 70)
+                        .overlay(
+                            ZStack {
+                                rectangle
+                                    .stroke(lineWidth: 3)
+                                    .fill(.blue)
+                                Text("Tap Me")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                            }
+                        )
+                        .matchedGeometryEffect(id: "card", in: animationNamespace)
+                        .padding(.horizontal)
+                }
+                .padding(.vertical, 20)
+            } else {
+                ZoomedCardView(
+                    namespace: animationNamespace,
+                    animation: animation,
+                    onDismiss: {
+                        withAnimation(.linear) {
+                            isZoomed = false
+                        }
+                        zoomedCardId = UUID()
+                    }
+                )
+                // This id is needed to regenerate the view so it does not
+                // have a leftover dragOffset value from the previous dimissal
+                .id(zoomedCardId)
+                .zIndex(1)
+            }
+        }
+        .navigationTitle("Card Transition")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(isZoomed ? .hidden : .visible)
     }
 }
 
-struct DetailDemoCard: View {
-    let item: NextFeatureView.CardType // Uses the enum type
+struct ZoomedCardView: View {
     let namespace: Namespace.ID
-    var dismissAction: () -> Void
+    let animation: Animation // Passed from parent for consistency
+    let onDismiss: () -> Void
+
+    @State private var dragOffset: CGSize = .zero
+    private let dismissThreshold: CGFloat = 80
 
     var body: some View {
-        VStack(spacing: 0) {
-            item.color // Access computed property
-                .matchedGeometryEffect(id: item.id, in: namespace) // Use enum's id
-                .frame(height: 250)
-                .overlay(
-                    VStack(alignment: .leading) {
-                        Spacer()
-                        Text(item.title) // Access computed property
-                            .font(.largeTitle.bold())
-                            .foregroundColor(.white)
-                            .padding()
+        let drag = DragGesture()
+            .onChanged { value in
+                dragOffset = CGSize(width: value.translation.width, height: max(0, value.translation.height))
+            }
+            .onEnded { value in
+                if value.translation.height > dismissThreshold {
+                    onDismiss()
+                } else {
+                    withAnimation(animation) {
+                        dragOffset = .zero
                     }
-                    .frame(maxWidth: .infinity, alignment: .bottomLeading)
-                )
-                .onTapGesture { dismissAction() }
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Full Details")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .padding(.top)
-
-                    Text(item.detailText) // Access computed property
-                        .font(.body)
-
-                    Spacer(minLength: 20)
-
-                    Button("Close") { dismissAction() }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.gray.opacity(0.2))
-                        .foregroundColor(.primary)
-                        .cornerRadius(10)
-                        .padding(.bottom)
                 }
-                .padding(.horizontal)
+            }
+
+        ZStack {
+            VStack {
+                Text("Zoomed In")
+                    .font(.largeTitle.bold())
+                    .foregroundColor(.white)
+                    .padding()
+
+                Image(systemName: "globe")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 144))
+
+                Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
+            .background {
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(Color.blue.mix(with: .black, by: 0.5))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
-        .background(Color(.systemBackground))
-        .ignoresSafeArea()
+        .matchedGeometryEffect(id: "card", in: namespace)
+        .offset(x: dragOffset.width, y: dragOffset.height)
+        .scaleEffect(dragOffset.height > 0 ? max(0.95, 1 - dragOffset.height / 500) : 1)
+        .containerRelativeFrame(.vertical) { size, _ in
+            size * max(0.6, 1 - dragOffset.height / 500)
+        }
+        .gesture(drag)
     }
 }
 
-extension NextFeatureView {
-    // Enum for Card Types, nested or in the same file scope
-    enum CardType: CaseIterable, Identifiable {
-        case alpha, beta, gamma
-
-        // Conformance to Identifiable
-        var id: String {
-            switch self {
-            case .alpha: return "alpha_card"
-            case .beta: return "beta_card"
-            case .gamma: return "gamma_card"
-            }
-        }
-
-        // Associated values provided by computed properties
-        var title: String {
-            switch self {
-            case .alpha: return "Project Alpha"
-            case .beta: return "Project Beta"
-            case .gamma: return "Project Gamma"
-            }
-        }
-
-        var color: Color {
-            switch self {
-            case .alpha: return .blue
-            case .beta: return .green
-            case .gamma: return .orange
-            }
-        }
-
-        var detailText: String {
-            switch self {
-            case .alpha: return "Detailed information about Project Alpha. This project focuses on innovative solutions for modern problems using cutting-edge technology."
-            case .beta: return "Exploring Project Beta: A deep dive into sustainable practices and ecological advancements. Learn how we are making a difference."
-            case .gamma: return "Unveiling Project Gamma: The future of interconnected systems and smart infrastructure. Discover the potential of seamless integration."
-            }
+struct NextFeatureView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            // Ensure viewModel is initialized correctly for the preview
+            NextFeatureView(viewModel: NextFeatureViewModel())
         }
     }
-
 }

@@ -9,11 +9,10 @@ import Foundation
 
 // MARK: - ViewModel Definition
 @MainActor
-@Observable // Swift 5.9+ Observation
+@Observable
 class NextFeatureViewModel {
     struct State {
-        var items: [NextFeatureView.CardType] = NextFeatureView.CardType.allCases
-        var selectedItem: NextFeatureView.CardType? = nil
+
     }
 
     private(set) var state: State
@@ -22,11 +21,4 @@ class NextFeatureViewModel {
         self.state = state
     }
 
-    func selectItem(_ item: NextFeatureView.CardType?) {
-        state.selectedItem = item
-    }
-
-    func deselectItem() {
-        state.selectedItem = nil
-    }
 }
