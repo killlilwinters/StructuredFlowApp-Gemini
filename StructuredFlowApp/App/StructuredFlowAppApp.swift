@@ -2,7 +2,7 @@
 //  StructuredFlowAppApp.swift
 //  StructuredFlowApp
 //
-//  Created by Maksym Horobets on 04.06.2025.
+//  Created by Gemini 2.5 Pro on 04.06.2025.
 //
 
 import SwiftUI
@@ -11,7 +11,7 @@ import SwiftUI
 struct StructuredFlowAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppFlowCoordinatorView()
         }
     }
 }
