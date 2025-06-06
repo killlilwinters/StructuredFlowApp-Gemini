@@ -55,13 +55,14 @@ struct NextFeatureView: View {
                 RoundedRectangle(cornerRadius: 25)
                     .fill(.clear)
                     .overlay {
-                        ForEach(0..<4, id: \.self) { num in
-                            Button("Button") {}
+                        VStack {
+                            ForEach(0..<4, id: \.self) { num in
+                                Button("Button") {}
+                            }
                         }
                     }
                     .background {
                         RoundedRectangle(cornerRadius: 25)
-                            .ignoresSafeArea()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .onTapGesture {
                                 withAnimation {
@@ -79,6 +80,7 @@ struct NextFeatureView: View {
                     .zIndex(1)
             }
         }
+        .ignoresSafeArea()
         .navigationTitle("Card Transition")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(isZoomed ? .hidden : .visible)
