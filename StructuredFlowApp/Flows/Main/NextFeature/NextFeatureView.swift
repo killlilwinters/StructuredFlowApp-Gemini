@@ -1,5 +1,5 @@
 //
-//  NextFeatureViewModel.swift
+//  NextFeatureView.swift
 //  StructuredFlowApp
 //
 //  Created by Maksym Horobets on 05.06.2025.
