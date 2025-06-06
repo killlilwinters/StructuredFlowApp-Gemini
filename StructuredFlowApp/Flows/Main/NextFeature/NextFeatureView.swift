@@ -47,7 +47,7 @@ struct NextFeatureView: View {
                     .frame(maxWidth: .infinity, maxHeight: 80)
                     .padding()
                     .onTapGesture {
-                        withAnimation {
+                        withAnimation(animation.speed(1.3)) {
                             isZoomed.toggle()
                         }
                     }
@@ -65,7 +65,7 @@ struct NextFeatureView: View {
                         RoundedRectangle(cornerRadius: 25)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .onTapGesture {
-                                withAnimation {
+                                withAnimation(animation) {
                                     isZoomed.toggle()
                                 }
                             }
