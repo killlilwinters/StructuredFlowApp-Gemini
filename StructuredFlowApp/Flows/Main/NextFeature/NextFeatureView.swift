@@ -1,3 +1,10 @@
+//
+//  NextFeatureViewModel.swift
+//  StructuredFlowApp
+//
+//  Created by Maksym Horobets on 05.06.2025.
+//
+
 import SwiftUI
 
 struct NextFeatureView: View {
