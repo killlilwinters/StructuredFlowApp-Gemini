@@ -11,6 +11,12 @@ struct NextFeatureView: View {
     @State var viewModel: NextFeatureViewModel
     @Namespace private var namespace
     @State private var isZoomed = false
+    
+    // MARK: Important
+    // Regenerate this value on each close
+    // and assign it as a view id (.id())
+    // to refresh the view's state and avoid
+    // the stale dragOffset (if it is a property of that view).
     @State private var zoomedCardId = UUID()
     
     @State private var dragOffset: CGSize = .zero
